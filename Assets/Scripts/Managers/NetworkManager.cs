@@ -5,17 +5,21 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class NetworkLobbyManager : NetworkManager {
+public class NetworkManager : Mirror.NetworkManager {
     [Scene] [SerializeField] string _menuScene;
     [SerializeField] int _minPlayer = 2;
 
-    [Header("Room")]
-    [SerializeField] InLobbyPlayer _roomPlayerPrefab;
+    [Header("Lobby")]
+    [SerializeField] LobbyPlayer _roomPlayerPrefab;
+
+    [Header("Game")]
+    [SerializeField] GamePlayer _gamePlayerPrefab;
 
     public static event Action OnClientConnected;
     public static event Action OnClientDisconnected;
 
-    public List<InLobbyPlayer> Players { get; } = new List<InLobbyPlayer>();
+    public List<LobbyPlayer> LobbyPlayers { get; } = new List<LobbyPlayer>();
+    public List<GamePlayer> GamePlayers { get; } = new List<GamePlayer>();
 
     public override void OnStartServer() {
         spawnPrefabs = Resources.LoadAll<GameObject>("SpawnablePrefabs").ToList();
@@ -54,32 +58,50 @@ public class NetworkLobbyManager : NetworkManager {
 
     public override void OnServerAddPlayer(NetworkConnectionToClient conn) {
         if(SceneManager.GetActiveScene().path == _menuScene) {
-            InLobbyPlayer roomPlayerInstance = Instantiate(_roomPlayerPrefab);
-            roomPlayerInstance.IsLeader = Players.Count == 0;
+            LobbyPlayer roomPlayerInstance = Instantiate(_roomPlayerPrefab);
+            roomPlayerInstance.IsLeader = LobbyPlayers.Count == 0;
             NetworkServer.AddPlayerForConnection(conn, roomPlayerInstance.gameObject);
         }
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn) {
         if(conn.identity != null) {
-            InLobbyPlayer player = conn.identity.GetComponent<InLobbyPlayer>();
-            Players.Remove(player);
+            LobbyPlayer player = conn.identity.GetComponent<LobbyPlayer>();
+            LobbyPlayers.Remove(player);
             NotifyPlayersOfReadyState();
         }
         base.OnServerDisconnect(conn);
     }
 
     public override void OnStopServer() {
-        Players.Clear();
+        LobbyPlayers.Clear();
         base.OnStopServer();
     }
 
     public void NotifyPlayersOfReadyState() {
-        foreach (InLobbyPlayer player in Players) player.HandleReadyToStart(IsReadyToStart());
+        foreach (LobbyPlayer player in LobbyPlayers) player.HandleReadyToStart(IsReadyToStart());
     }
 
     private bool IsReadyToStart() {
         if (numPlayers < _minPlayer) return false;
-        return !Players.Any(player => !player.IsReady);
+        return !LobbyPlayers.Any(player => !player.IsReady);
+    }
+
+    public void StartGame() {
+        if(SceneManager.GetActiveScene().path == _menuScene && IsReadyToStart()) ServerChangeScene("SampleScene");
+    }
+
+    public override void ServerChangeScene(string newSceneName) {
+        if(SceneManager.GetActiveScene().path == _menuScene) {
+            for(int i = LobbyPlayers.Count - 1; i >=0; i--) {
+                NetworkConnectionToClient conn = LobbyPlayers[i].connectionToClient;
+                GamePlayer gamePlayerInstance = Instantiate(_gamePlayerPrefab);
+                gamePlayerInstance.SetDisplayName(LobbyPlayers[i].DisplayName);
+                NetworkServer.Destroy(conn.identity.gameObject);
+                NetworkServer.ReplacePlayerForConnection(conn, gamePlayerInstance.gameObject);
+            }
+        }
+
+        base.ServerChangeScene(newSceneName);
     }
 }

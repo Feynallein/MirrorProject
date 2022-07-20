@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine.UI;
 
 public class JoinLobbyMenu : MonoBehaviour {
-    [SerializeField] NetworkLobbyManager _networkManager;
+    [SerializeField] NetworkManager _networkManager;
 
     [Header("UI")]
     [SerializeField] GameObject _landingPagePanel;
@@ -13,13 +13,13 @@ public class JoinLobbyMenu : MonoBehaviour {
     [SerializeField] Button _joinButton;
 
     private void OnEnable() {
-        NetworkLobbyManager.OnClientConnected += HandleClientConnected;
-        NetworkLobbyManager.OnClientDisconnected += HandleClientDisconnected;
+        NetworkManager.OnClientConnected += HandleClientConnected;
+        NetworkManager.OnClientDisconnected += HandleClientDisconnected;
     }
 
     private void OnDisable() {
-        NetworkLobbyManager.OnClientConnected -= HandleClientConnected;
-        NetworkLobbyManager.OnClientDisconnected -= HandleClientDisconnected;
+        NetworkManager.OnClientConnected -= HandleClientConnected;
+        NetworkManager.OnClientDisconnected -= HandleClientDisconnected;
     }
 
     public void JoinLobby() {

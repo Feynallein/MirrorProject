@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody))]
-public class Player : MonoBehaviour {
+public class PlayerController : MonoBehaviour {
     [Header("Movement Setup")]
     [Tooltip("Translation speed in m/s")]
     [SerializeField] float _TranslationSpeed;

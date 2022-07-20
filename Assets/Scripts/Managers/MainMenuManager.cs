@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MainMenu : MonoBehaviour {
-    [SerializeField] NetworkLobbyManager networkManager;
+public class MainMenuManager : MonoBehaviour {
+    [SerializeField] NetworkManager networkManager;
     [Header("UI")]
     [SerializeField] GameObject _landingPagePanel;
 

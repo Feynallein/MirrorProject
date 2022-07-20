@@ -5,7 +5,7 @@ using Mirror;
 using TMPro;
 using UnityEngine.UI;
 
-public class InLobbyPlayer : NetworkBehaviour {
+public class LobbyPlayer : NetworkBehaviour {
     [Header("UI")]
     [SerializeField] GameObject _lobbyUI;
     [SerializeField] TMP_Text[] _playerNames = new TMP_Text[4];
@@ -13,7 +13,7 @@ public class InLobbyPlayer : NetworkBehaviour {
     [SerializeField] Button _startGameButton;
 
     bool _isLeader;
-    NetworkLobbyManager _room;
+    NetworkManager _room;
 
     [SyncVar(hook = nameof(HandleDisplayNameChanged))]
     public string DisplayName = "Loading...";
@@ -27,9 +27,9 @@ public class InLobbyPlayer : NetworkBehaviour {
         } 
     }
 
-    private NetworkLobbyManager Room {
+    private NetworkManager Room {
         get {
-            if(_room == null) _room = NetworkManager.singleton as NetworkLobbyManager;
+            if(_room == null) _room = Mirror.NetworkManager.singleton as NetworkManager;
             return _room;
         }
     }
@@ -40,12 +40,12 @@ public class InLobbyPlayer : NetworkBehaviour {
     }
 
     public override void OnStartClient() {
-        Room.Players.Add(this);
+        Room.LobbyPlayers.Add(this);
         UpdateDisplay();
     }
 
     public override void OnStopClient() {
-        Room.Players.Remove(this);
+        Room.LobbyPlayers.Remove(this);
         UpdateDisplay();
     }
 
@@ -54,7 +54,7 @@ public class InLobbyPlayer : NetworkBehaviour {
 
     void UpdateDisplay() {
         if(!hasAuthority) {
-            foreach(InLobbyPlayer player in Room.Players) {
+            foreach(LobbyPlayer player in Room.LobbyPlayers) {
                 if (player.hasAuthority) {
                     player.UpdateDisplay();
                     break;
@@ -69,9 +69,9 @@ public class InLobbyPlayer : NetworkBehaviour {
             _readyPlayerNames[i].text = "";
         }
 
-        for(int i = 0; i < Room.Players.Count; i++) {
-            _playerNames[i].text = Room.Players[i].DisplayName;
-            _readyPlayerNames[i].text = Room.Players[i].IsReady ? "<color=green>Ready</color>" : "<color=red>Not Ready</color>";
+        for(int i = 0; i < Room.LobbyPlayers.Count; i++) {
+            _playerNames[i].text = Room.LobbyPlayers[i].DisplayName;
+            _readyPlayerNames[i].text = Room.LobbyPlayers[i].IsReady ? "<color=green>Ready</color>" : "<color=red>Not Ready</color>";
         }
     }
 
@@ -91,8 +91,8 @@ public class InLobbyPlayer : NetworkBehaviour {
 
     [Command]
     public void CmdStartGame() {
-        if (Room.Players[0].connectionToClient != connectionToClient) return;
-        //start the game
+        if (Room.LobbyPlayers[0].connectionToClient != connectionToClient) return;
+        Room.StartGame();
     }
 
 }
