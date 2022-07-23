@@ -14,9 +14,11 @@ public class NetworkManager : Mirror.NetworkManager {
 
     [Header("Game")]
     [SerializeField] GamePlayer _gamePlayerPrefab;
+    [SerializeField] GameObject _playerSpawnSystem;
 
     public static event Action OnClientConnected;
     public static event Action OnClientDisconnected;
+    public static event Action<NetworkConnection> OnServerReadied;
 
     public List<LobbyPlayer> LobbyPlayers { get; } = new List<LobbyPlayer>();
     public List<GamePlayer> GamePlayers { get; } = new List<GamePlayer>();
@@ -103,5 +105,17 @@ public class NetworkManager : Mirror.NetworkManager {
         }
 
         base.ServerChangeScene(newSceneName);
+    }
+
+    public override void OnServerReady(NetworkConnectionToClient conn) {
+        base.OnServerReady(conn);
+        OnServerReadied?.Invoke(conn);
+    }
+
+    public override void OnServerSceneChanged(string sceneName) {
+        if (sceneName.StartsWith("SampleScene")) {
+            GameObject playerSpawnSystemInstance = Instantiate(_playerSpawnSystem);
+            NetworkServer.Spawn(playerSpawnSystemInstance);
+        }
     }
 }
